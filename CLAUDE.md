@@ -1,6 +1,8 @@
-# Working in this repo
+# Chore rota — working in this repo
 
-This is an **immediately.run app**: React + TypeScript that loads from GitHub and
+Chore rota is an **immediately.run app** (rotations + sign-up sheets over a shared
+space; data model in `src/lib/repo.ts`, calendar math in `src/lib/rota.ts`,
+storage in `src/lib/store.ts`). It is React + TypeScript that loads from GitHub and
 transpiles in the browser (no server, no build step at runtime). Keep the rules
 below or the app breaks *only* on immediately.run while still looking fine in
 local `vite dev` — the most common silent failure.
