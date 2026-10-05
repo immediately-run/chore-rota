@@ -1,6 +1,6 @@
-// Loads a Snapshot from the active store, polls the record directories so other
+// Loads a Snapshot from the active store, watches the store root so other
 // members' writes show up (no remote watch events on shared spaces), and exposes
-// the write actions. Every action re-reads after writing; a poll-triggered reload
+// the write actions. Every action re-reads after writing; a watch-triggered reload
 // that was NOT caused by this tab bumps `pulse` so the UI can flash "updated".
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -25,9 +25,10 @@ import type { Chore, Sheet, Slot, Snapshot } from '../lib/types';
 import { emptySnapshot } from '../lib/types';
 
 const EMPTY: Snapshot = emptySnapshot();
-/** A poll firing within this window of our own write is our write echoing back. */
+/** A watch event within this window of our own write is our write echoing back. */
 // The own-write echo window: a local write's echo reload is redundant (we just
-// wrote), so within this window the reload runs in quiet mode. Was 2 poll ticks.
+// wrote), so within this window the reload runs in quiet mode. (Was 2 poll ticks
+// when this was a 3 s poll; the value is unchanged.)
 const OWN_WRITE_WINDOW_MS = 6000;
 
 export interface ChoreInput {

@@ -7,7 +7,7 @@ interface Props {
 }
 
 /** "Live" indicator for shared spaces; flashes "Updated" for a moment after a
- *  poll picked up someone else's write. */
+ *  watch picked up someone else's write. */
 function LivePill({ pulse, shared }: Props) {
   const [seen, setSeen] = useState(0);
   const flash = pulse !== 0 && pulse !== seen;
