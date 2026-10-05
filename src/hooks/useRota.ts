@@ -80,7 +80,7 @@ export function useRota(store: Store | null, me: string) {
     })();
   }, [root, writable, reload]);
 
-  // R3-901: ONE recursive watch on the store root replaces the per-directory
+  // R3-901: one recursive watch on the store root replaces the per-directory
   // polls — every record dir lives under the root and the relay reports the
   // changed path. The own-write window still gates the LOCAL echo (own writes
   // echo locally even though the relay suppresses their remote re-report).
