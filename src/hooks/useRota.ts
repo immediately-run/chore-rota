@@ -1,5 +1,5 @@
 // Loads a Snapshot from the active store, watches the store root so other
-// members' writes show up (no remote watch events on shared spaces), and exposes
+// members' writes show up live (the host's watch relay), and exposes
 // the write actions. Every action re-reads after writing; a watch-triggered reload
 // that was NOT caused by this tab bumps `pulse` so the UI can flash "updated".
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
