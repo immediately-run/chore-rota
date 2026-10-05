@@ -1,6 +1,6 @@
-// Loads a Snapshot from the active store, polls the record directories so other
-// members' writes show up (no remote watch events on shared spaces), and exposes
-// the write actions. Every action re-reads after writing; a poll-triggered reload
+// Loads a Snapshot from the active store, watches the store root so other
+// members' writes show up live (the host's watch relay), and exposes
+// the write actions. Every action re-reads after writing; a watch-triggered reload
 // that was NOT caused by this tab bumps `pulse` so the UI can flash "updated".
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -16,19 +16,20 @@ import {
   saveChore,
   saveSheet,
   setOverride,
-  watchedDirs,
 } from '../lib/repo';
 import { duty } from '../lib/rota';
 import type { Duty } from '../lib/rota';
-import { newId, pollDir } from '../lib/store';
+import { newId, watchDir } from '../lib/store';
 import type { Store } from '../lib/store';
 import type { Chore, Sheet, Slot, Snapshot } from '../lib/types';
 import { emptySnapshot } from '../lib/types';
 
-const POLL_MS = 3000;
 const EMPTY: Snapshot = emptySnapshot();
-/** A poll firing within this window of our own write is our write echoing back. */
-const OWN_WRITE_WINDOW_MS = 2 * POLL_MS;
+/** A watch event within this window of our own write is our write echoing back. */
+// The own-write echo window: a local write's echo reload is redundant (we just
+// wrote), so within this window the reload runs in quiet mode. (Was 2 poll ticks
+// when this was a 3 s poll; the value is unchanged.)
+const OWN_WRITE_WINDOW_MS = 6000;
 
 export interface ChoreInput {
   name: string;
@@ -79,14 +80,16 @@ export function useRota(store: Store | null, me: string) {
     })();
   }, [root, writable, reload]);
 
-  // Poll every directory that holds records for the current snapshot.
-  const dirKey = useMemo(() => (root ? watchedDirs(root, snap).join('\n') : ''), [root, snap]);
+  // R3-901: one recursive watch on the store root replaces the per-directory
+  // polls — every record dir lives under the root and the relay reports the
+  // changed path. The own-write window still gates the LOCAL echo (own writes
+  // echo locally even though the relay suppresses their remote re-report).
   useEffect(() => {
-    if (!dirKey) return;
+    if (!root) return;
     const onChange = () => void reload(Date.now() - lastLocalWrite.current > OWN_WRITE_WINDOW_MS);
-    const stops = dirKey.split('\n').map((d) => pollDir(d, onChange, POLL_MS));
-    return () => stops.forEach((stop) => stop());
-  }, [dirKey, reload]);
+    const stop = watchDir(root, onChange);
+    return () => stop();
+  }, [root, reload]);
 
   const mutate = useCallback(
     async (job: (root: string) => Promise<void>) => {
