@@ -19,20 +19,10 @@ export const dirs = {
   claims: (root: string, sheetId: string) => `${root}/claims/${sheetId}`,
 };
 
-/** Every directory a live view needs to poll for this snapshot. */
-export function watchedDirs(root: string, snap: Snapshot): string[] {
-  return [
-    dirs.chores(root),
-    dirs.sheets(root),
-    ...snap.chores.flatMap((c) => [dirs.overrides(root, c.id), dirs.done(root, c.id)]),
-    ...snap.sheets.map((s) => dirs.claims(root, s.id)),
-  ];
-}
-
 const stripExt = (name: string) => name.replace(/\.json$/, '');
 
-/** Create a record directory with a `.keep` marker. `pollDir` only reports a
- *  change once it has a non-empty baseline, so an empty directory would hide its
+/** Create a record directory with a `.keep` marker. A watch on the parent only
+ *  fires for events INSIDE it, so an empty directory would hide its
  *  FIRST record from other members; the marker gives every directory a baseline. */
 export async function prepDir(dir: string): Promise<void> {
   await ensureDir(dir);
